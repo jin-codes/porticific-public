@@ -1,0 +1,27 @@
+# env files (real secrets — never commit)
+.env
+.env.local
+.env.*.local
+!.env.local.example
+
+# python
+.venv/
+__pycache__/
+*.pyc
+
+# claude code local session settings (not shared config)
+.claude/settings.local.json
+
+# personal investment profile (contains individual risk tolerance/holdings bias)
+INVESTMENT_PROFILE.md
+
+# misc
+.DS_Store
+
+# node / next
+node_modules/
+.next/
+next-env.d.ts
+tsconfig.tsbuildinfo
+.vercel/
+tools/scratch/

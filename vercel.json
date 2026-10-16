@@ -1,0 +1,9 @@
+{
+  "regions": ["icn1"],
+  "crons": [
+    { "path": "/api/cron/prices", "schedule": "30 21 * * 1-5" },
+    { "path": "/api/cron/daily-analysis", "schedule": "40 21 * * 1-5" },
+    { "path": "/api/cron/thesis-check", "schedule": "0 22 * * 6" },
+    { "path": "/api/cron/alerts", "schedule": "30 22 * * *" }
+  ]
+}

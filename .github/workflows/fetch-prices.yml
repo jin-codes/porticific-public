@@ -1,0 +1,45 @@
+name: Fetch Prices
+
+on:
+  schedule:
+    # every 10 min, 13:00-21:00 UTC (covers US pre-market through after-hours
+    # across both EDT/EST), Mon-Fri. Keeps daily_snapshots' "today" row fresh
+    # throughout the trading day instead of only once at the daily analysis run.
+    # 5 min is the GitHub Actions floor, but yfinance is an unofficial scrape
+    # of Yahoo Finance and can soft rate-limit very frequent callers, so 10
+    # min is the safer floor in practice.
+    # Offset from the top of the hour (:04, :14, :24, ...) instead of :00/:10
+    # since on-the-hour/round-number slots are the most congested on GitHub's
+    # shared scheduler and get delayed the most.
+    - cron: "4-59/10 13-21 * * 1-5"
+  workflow_dispatch: {}
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HAS_SECRETS: ${{ secrets.SUPABASE_URL != '' && secrets.SUPABASE_SERVICE_ROLE_KEY != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        if: env.HAS_SECRETS == 'true'
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        if: env.HAS_SECRETS == 'true'
+        run: pip install -r scripts/requirements.txt
+
+      - name: Write .env.local for scripts
+        if: env.HAS_SECRETS == 'true'
+        run: |
+          cat > .env.local <<EOF
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          EOF
+
+      - name: Fetch prices
+        if: env.HAS_SECRETS == 'true'
+        run: python scripts/fetch_prices.py

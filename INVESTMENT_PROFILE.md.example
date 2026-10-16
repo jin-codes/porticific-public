@@ -1,0 +1,38 @@
+# Investment Profile
+
+Follow the criteria below when the daily analysis (`the daily-analysis command`)
+judges signals. This file is gitignored and never committed — copy this
+example to `INVESTMENT_PROFILE.md` and fill it in with your own
+investment profile.
+
+```bash
+cp INVESTMENT_PROFILE.md.example INVESTMENT_PROFILE.md
+```
+
+Below are example fields to fill in. Write the actual content however
+you like, but keeping this structure is recommended — `the daily-analysis command`
+refers to it.
+
+- **Analysis language**: (e.g. `Korean`, `English`, `Japanese` — the
+  language `reasoning`, the portfolio `summary`, and `top_pick_reason`
+  should be written in. This only controls the prose; the `signal`
+  values saved to the DB are always the fixed English literals defined
+  in `the daily-analysis command`, regardless of this setting. If omitted,
+  defaults to English.)
+- **Risk tolerance**: (e.g. value-investing preference / growth-stock
+  preference / aggressive momentum-following — describe your own buying
+  criteria concretely)
+- **Investment horizon**: (e.g. short-term trading / mid-term holding of
+  3+ months / long-term holding of 1+ years — holding-period principles
+  that should influence sell-signal judgments)
+- **Portfolio concentration/themes**: (e.g. whether you're deliberately
+  concentrated in a specific sector, whether you want diversification,
+  and what risks you want flagged first if concentrated)
+
+## How to apply this when judging signals
+
+- Define concretely, based on the risk tolerance/horizon above, under
+  what conditions each signal (buy/sell/hold/watch, etc.) should be used.
+- Note when signals should *not* be issued (e.g. don't issue a sell
+  signal from short-term volatility alone) so the analysis stays
+  consistent.
