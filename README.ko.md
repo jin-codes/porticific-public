@@ -6,6 +6,10 @@
 
 > 개인 투자 기록 도구이며 **투자 자문이 아닙니다.** [면책](#라이선스--면책)을 참고하세요.
 
+![porticific 랜딩 페이지](docs/screenshots/hero-ko.webp)
+
+![porticific 기능 소개](docs/screenshots/features-ko.webp)
+
 ## 기능
 - **웹 UI** — 대시보드, 종목별 페이지(논거, 분석 이력, 가격 차트, 거래), 관심종목, 거래, 설정
 - **MCP 서버** — `/api/mcp`, 포트폴리오 조회와 편집용 도구 34개(매수·매도 기록, 논거와 논거 주장, 관심종목, 태그, 정기 투자 계획). OAuth(Claude.ai 커넥터) 또는 API 키로 연결

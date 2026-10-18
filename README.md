@@ -6,6 +6,10 @@ A portfolio journal as a service: record **why** you bought each holding, check 
 
 > Personal journal tool, **not investment advice**. See [Disclaimer](#license--disclaimer).
 
+![porticific landing page](docs/screenshots/hero-en.webp)
+
+![porticific features](docs/screenshots/features-en.webp)
+
 ## Features
 - **Web UI** — dashboard, per-stock page (thesis, analysis history, price chart, trades), watchlist, trades, settings
 - **MCP server** — `/api/mcp`, 34 tools to read the portfolio and edit it (record buys/sells, thesis and thesis claims, watchlist, tags, DCA plans). OAuth (Claude.ai connectors) or API key
