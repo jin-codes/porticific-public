@@ -6,7 +6,10 @@ import { runThesisCheck } from '@/lib/analysis/thesis'
 
 export const maxDuration = 300
 
-/** Weekly: re-check thesis claims for every user that has active claims. */
+/**
+ * Weekly: re-check thesis claims for every user that has active claims (the tickers the user chose to
+ * track). The only automatic AI run paid by the server key; users with their own key use theirs.
+ */
 export async function GET(req: Request) {
   const denied = rejectUnlessCron(req)
   if (denied) return denied
@@ -17,7 +20,7 @@ export async function GET(req: Request) {
   const results: Record<string, unknown> = {}
   for (const userId of users) {
     try {
-      results[userId] = await runThesisCheck(makeCtx(userId))
+      results[userId] = await runThesisCheck(makeCtx(userId), { serverKeyOk: true })
     } catch (e) {
       results[userId] = { status: 'error', error: e instanceof Error ? e.message : String(e) }
     }

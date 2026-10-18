@@ -225,6 +225,10 @@ export type Database = {
           user_id: string
         }
       >
+      user_anthropic_keys: Table<
+        { ciphertext: string; created_at: string; key_hint: string; user_id: string },
+        { ciphertext: string; created_at?: string; key_hint: string; user_id: string }
+      >
       mcp_oauth_clients: Table<
         { client_id: string; client_name: string | null; created_at: string; id: string; redirect_uris: string[] },
         { client_id: string; client_name?: string | null; created_at?: string; id?: string; redirect_uris: string[] }

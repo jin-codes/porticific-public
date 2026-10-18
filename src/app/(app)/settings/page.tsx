@@ -3,14 +3,17 @@ import * as svc from '@/lib/portfolio/service'
 import { num } from '@/lib/format'
 import { ALERT_KINDS, ALERT_KIND_LABEL } from '@/lib/notify/digest'
 import { Card, inputCls } from '@/components/ui'
+import { secretBoxConfigured } from '@/lib/secret-box'
 import { ActionButton, ActionForm } from '@/components/ActionForm'
 import {
   createApiKeyAction,
+  deleteAnthropicKeyAction,
   dcaPlanAction,
   notificationPrefsAction,
   profileAction,
   revokeApiKeyAction,
   revokeOAuthClientAction,
+  saveAnthropicKeyAction,
   runAnalysisAction,
   sendAlertsNowAction,
   sendTestEmailAction,
@@ -22,7 +25,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function SettingsPage() {
   const ctx = await requireCtx()
-  const [profile, notif, plans, keys, oauth] = await Promise.all([
+  const [profile, notif, plans, keys, oauth, ownKey] = await Promise.all([
     svc.getProfile(ctx),
     svc.getNotificationPrefs(ctx),
     svc.listDcaPlans(ctx),
@@ -33,6 +36,7 @@ export default async function SettingsPage() {
       .eq('user_id', ctx.userId)
       .is('revoked_at', null)
       .order('created_at', { ascending: false }),
+    ctx.db.from('user_anthropic_keys').select('key_hint, created_at').eq('user_id', ctx.userId).maybeSingle(),
   ])
   // one row per connected app (the newest live token)
   const clientIds = [...new Set((oauth.data ?? []).map((t) => t.client_id))]
@@ -83,11 +87,36 @@ export default async function SettingsPage() {
         </div>
       </Card>
 
-      <Card title="일일 분석">
+      <Card title="분석 (원하는 종목만)">
         <p className="mb-3 text-sm text-neutral-500">
-          평일 장 마감 후 자동 실행됩니다. 서버에 ANTHROPIC_API_KEY가 없으면 건너뜁니다.
+          매일 자동으로 돌지 않습니다. 아래에서 종목을 골라 실행하거나(비우면 보유 종목부터 최대 15개), Claude에게 “오늘 분석해줘”라고 하면 Claude가 직접 분석해 저장합니다.
+          서버에서 실행하는 분석은 내 Anthropic API 키로 처리됩니다. 논거 점검은 주 1회 자동으로 돕니다.
         </p>
-        <ActionButton action={runAnalysisAction} label="지금 분석 실행" />
+        <ActionForm action={runAnalysisAction} submit="지금 분석 실행" className="space-y-2">
+          <input name="tickers" placeholder="티커 (쉼표로 구분, 비우면 전체)" className={inputCls} />
+        </ActionForm>
+      </Card>
+
+      <Card title="내 Anthropic API 키 (선택)">
+        <p className="mb-3 text-sm text-neutral-500">
+          서버 측 분석(논거 분리·점검, 지금 분석 실행)을 내 키로 실행합니다. 키는 암호화해 저장하고, 화면과 MCP에는 다시 표시하지 않으며, 언제든 삭제할 수 있습니다.
+          키를 넣지 않아도 Claude에 연결해 직접 분석하게 할 수 있습니다.
+        </p>
+        {!secretBoxConfigured() ? (
+          <p className="text-sm text-neutral-500">이 서버는 키 저장이 설정되지 않았습니다.</p>
+        ) : (
+          <>
+            {ownKey.data && (
+              <div className="mb-3 flex items-center gap-3 text-sm">
+                <span>저장된 키: …{ownKey.data.key_hint}</span>
+                <ActionForm action={deleteAnthropicKeyAction} submit="삭제" confirm="저장된 키를 삭제할까요?">{null}</ActionForm>
+              </div>
+            )}
+            <ActionForm action={saveAnthropicKeyAction} submit={ownKey.data ? '키 교체' : '키 저장'} className="space-y-2">
+              <input name="key" type="password" autoComplete="off" placeholder="sk-ant-…" required className={inputCls} />
+            </ActionForm>
+          </>
+        )}
       </Card>
 
       <Card title="DCA 계획 (매일 원화 정액 매수)">

@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import * as svc from '@/lib/portfolio/service'
 import type { Ctx } from '@/lib/portfolio/service'
 import type { Signal } from '@/lib/portfolio/calc'
+import { NO_KEY_REASON, resolveAnthropicKey } from './credentials'
 
 // Port of the DAILY_ANALYSIS.md workflow from the single-user prototype: per-ticker
 // signal + reasoning against the buy thesis and yesterday's analysis, then a
@@ -39,8 +40,8 @@ export interface DailyAnalysisResult {
   top_pick?: string | null
 }
 
-export function client() {
-  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+export function client(apiKey: string) {
+  return new Anthropic({ apiKey })
 }
 
 function toolInput<T>(res: Anthropic.Messages.Message, name: string): T | null {
@@ -79,16 +80,16 @@ export async function callWithTool<T>(
   throw new Error(`model never called ${opts.tool.name}`)
 }
 
-export async function runDailyAnalysis(ctx: Ctx): Promise<DailyAnalysisResult> {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return { status: 'skipped', reason: 'ANTHROPIC_API_KEY is not set on the server' }
-  }
-  const model = process.env.ANALYSIS_MODEL ?? 'claude-sonnet-5-5'
+/** On-demand analysis. `tickers` limits it to the ones the user asks for; the caller's own key pays (see resolveAnthropicKey). */
+export async function runDailyAnalysis(ctx: Ctx, opts: { tickers?: string[] } = {}): Promise<DailyAnalysisResult> {
+  const apiKey = await resolveAnthropicKey(ctx)
+  if (!apiKey) return { status: 'skipped', reason: NO_KEY_REASON }
+  const model = process.env.ANALYSIS_MODEL ?? 'claude-haiku-5-5'
   const webSearch = process.env.ANALYSIS_WEB_SEARCH === '1'
-  const maxTickers = Number(process.env.ANALYSIS_MAX_TICKERS ?? 30)
-  const anthropic = client()
+  const maxTickers = Number(process.env.ANALYSIS_MAX_TICKERS ?? 15)
+  const anthropic = client(apiKey)
 
-  const context = await svc.analysisContext(ctx, { maxTickers })
+  const context = await svc.analysisContext(ctx, { maxTickers, tickers: opts.tickers })
   const { date, investment_profile: profile } = context
   const items = context.items
   if (!items.length) return { status: 'skipped', reason: 'no holdings or watchlist' }

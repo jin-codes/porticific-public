@@ -9,6 +9,7 @@ import { sendAlerts } from '@/lib/notify/run'
 import { ALERT_KINDS } from '@/lib/notify/digest'
 import { SIGNALS, VERDICTS } from '@/lib/portfolio/calc'
 import { toolAllowed } from './scope'
+import { toolTitle } from './title'
 
 const READ: ToolAnnotations = { readOnlyHint: true }
 const WRITE: ToolAnnotations = { readOnlyHint: false, destructiveHint: false }
@@ -38,7 +39,7 @@ function register<S extends ZodRawShape>(
     cb: (args: unknown, extra: { authInfo?: { extra?: Record<string, unknown> } }) => Promise<ToolResult>
   ) => void
 
-  registerTool(name, { title: name, description, annotations, inputSchema: shape }, async (args, extra) => {
+  registerTool(name, { title: toolTitle(name), description, annotations, inputSchema: shape }, async (args, extra) => {
     const userId = extra.authInfo?.extra?.userId as string | undefined
     if (!userId) return { content: [{ type: 'text', text: 'Unauthorized: missing API key context.' }], isError: true }
     if (!toolAllowed(extra.authInfo?.extra?.scope, name)) {
@@ -118,7 +119,7 @@ export function configureMcpServer(server: McpServer) {
   register(server, 'list_dca_plans', 'Recurring daily KRW purchase plans.', READ, {},
     (ctx) => svc.listDcaPlans(ctx))
 
-  register(server, 'get_investment_profile', "The user's investment profile text (risk tolerance, horizon, concentration rules). Factor it into any signal judgement.", READ, {},
+  register(server, 'get_investment_profile', "The user's saved investment profile text (risk tolerance, horizon, concentration rules).", READ, {},
     async (ctx) => ({ profile: await svc.getProfile(ctx) }))
 
   // ----------------------------------------------------------------- writes
@@ -190,7 +191,7 @@ export function configureMcpServer(server: McpServer) {
     (ctx, a) => svc.deleteClaim(ctx, a.id))
 
   register(server, 'thesis_review_context',
-    'Everything needed to re-check thesis claims: per ticker the thesis, position, latest stored price, upcoming events and each claim with kill criteria, status and recent checks. Judge each claim with fresh facts, then call save_thesis_check.',
+    'Per ticker: the thesis, position, latest stored price, upcoming events and each claim with kill criteria, status and recent checks. Read-only input for re-checking claims.',
     READ, { ticker: ticker.optional() },
     (ctx, a) => svc.thesisReviewContext(ctx, { ticker: a.ticker }))
 
@@ -200,12 +201,12 @@ export function configureMcpServer(server: McpServer) {
     (ctx, a) => svc.saveThesisCheck(ctx, a))
 
   register(server, 'propose_thesis_claims',
-    'Server-side: split a ticker\'s thesis text into 3-6 falsifiable claims with kill criteria and store them (needs ANTHROPIC_API_KEY; skipped if the ticker already has claims). Alternative: write claims yourself with add_thesis_claims.', WRITE,
+    "Split a ticker's thesis text into 3-6 falsifiable claims with kill criteria and store them. Runs on the user's own Anthropic API key saved in Settings; returns status 'skipped' with the reason when no key is available or the ticker already has claims.", WRITE,
     { ticker },
     (ctx, a) => proposeClaims(ctx, a.ticker))
 
   register(server, 'run_thesis_check',
-    'Server-side: re-check all active claims (or one ticker) against current facts and store the verdicts (needs ANTHROPIC_API_KEY). Alternative: use thesis_review_context + save_thesis_check with your own research.', WRITE,
+    "Re-check the active claims of one ticker (or all tickers, up to the server's per-run cap) against current facts and store the verdicts. Runs on the user's own Anthropic API key saved in Settings; returns status 'skipped' with the reason when no key is available.", WRITE,
     { ticker: ticker.optional() },
     (ctx, a) => runThesisCheck(ctx, { ticker: a.ticker }))
 
@@ -279,6 +280,7 @@ export function configureMcpServer(server: McpServer) {
     (ctx, a) => svc.savePortfolioAnalysis(ctx, a))
 
   register(server, 'run_daily_analysis',
-    'Run the daily analysis now for the signed-in user (needs ANTHROPIC_API_KEY on the server). Stores per-ticker signals and the portfolio summary.', WRITE, {},
-    (ctx) => runDailyAnalysis(ctx))
+    "Run the analysis now for the listed tickers (default: holdings first, then watchlist, up to the server's per-run cap). Stores per-ticker signals and a portfolio summary. Runs on the user's own Anthropic API key saved in Settings; returns status 'skipped' with the reason when no key is available.", WRITE,
+    { tickers: z.array(ticker).max(30).optional() },
+    (ctx, a) => runDailyAnalysis(ctx, { tickers: a.tickers }))
 }

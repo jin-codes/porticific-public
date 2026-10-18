@@ -8,9 +8,9 @@ const handler = createMcpHandler(
   (server) => configureMcpServer(server),
   {
     instructions:
-      "This connector is the user's personal portfolio journal. Read tools: portfolio_summary, get_stock (holding/watchlist, buy thesis, analysis, ledger, events), get_prices (live or stored), get_analysis, report, upcoming_events. " +
-      'Write tools change real records: record_buy / record_sell update the ledger and holdings, set_thesis edits the buy thesis, correct_holding overwrites data without a ledger row (use only to fix mistakes). ' +
-      'Only write when the user asked for it. Always read get_investment_profile before judging signals. Nothing here is investment advice; present analysis as the user\'s own notes and data.',
+      "Personal portfolio journal for the signed-in user. Read tools: portfolio_summary, get_stock, get_prices, get_analysis, report, upcoming_events. " +
+      'Write tools change the user\'s own records: record_buy / record_sell update the ledger and holdings, set_thesis edits the buy thesis, correct_holding overwrites a holding without a ledger row. ' +
+      "Data is the user's own notes and market prices from a third-party provider; it is not investment advice.",
   },
   { basePath: '/api', maxDuration: 60 }
 )

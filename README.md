@@ -10,7 +10,7 @@ A portfolio journal as a service: record **why** you bought each holding, check 
 - **Web UI** — dashboard, per-stock page (thesis, analysis history, price chart, trades), watchlist, trades, settings
 - **MCP server** — `/api/mcp`, 34 tools to read the portfolio and edit it (record buys/sells, thesis and thesis claims, watchlist, tags, DCA plans). OAuth (Claude.ai connectors) or API key
 - **Thesis tracking** — split a buy thesis into checkable claims and track *holding / weakened / broken* over time
-- **Daily analysis** — a signal and reasoning per ticker against the buy thesis and the previous day's analysis, then a portfolio summary and a watchlist top pick (needs `ANTHROPIC_API_KEY`)
+- **Daily analysis** — a signal and reasoning per ticker against the buy thesis and the previous day's analysis, then a portfolio summary and a watchlist top pick (on demand for chosen tickers; runs on the caller's own Anthropic key saved encrypted in Settings, or by their own Claude via `analysis_context` + `save_analysis`; the server `ANTHROPIC_API_KEY` is used only for the owner account and the weekly thesis check, needs `KEY_ENCRYPTION_SECRET` for saved keys)
 - **Email digest** — opt-in alerts for signal changes and upcoming events
 - **Security model** — every per-user table has `user_id` + RLS with an owner `SELECT` policy and no write policies. All writes go through the server after the caller is verified. Buy/sell are atomic SQL functions only the service role can run
 
@@ -29,7 +29,7 @@ npm run dev
 
 ## Deploy (Vercel)
 - Import the repo and set the env vars from `.env.local.example` (including `CRON_SECRET`, which Vercel sends to the cron routes).
-- `vercel.json` schedules `/api/cron/prices` and `/api/cron/daily-analysis` on weekdays after the US close, `/api/cron/thesis-check` on Saturdays, and `/api/cron/alerts` daily (email digest, opt-in per user in Settings; needs `ALERT_SMTP_USER` / `ALERT_SMTP_PASS`, e.g. a Gmail app password). Vercel Hobby only allows daily crons.
+- `vercel.json` schedules `/api/cron/prices` on weekdays after the US close (no automatic daily analysis), `/api/cron/thesis-check` on Saturdays, and `/api/cron/alerts` daily (email digest, opt-in per user in Settings; needs `ALERT_SMTP_USER` / `ALERT_SMTP_PASS`, e.g. a Gmail app password). Vercel Hobby only allows daily crons.
 - For intraday prices every 10 minutes, set the repo secrets `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; `.github/workflows/fetch-prices.yml` then runs `scripts/fetch_prices.py`.
 - Set `NEXT_PUBLIC_SITE_URL` to the production origin (shown on the settings page).
 

@@ -10,6 +10,7 @@ import { proposeClaims, runThesisCheck } from '@/lib/analysis/thesis'
 import { sendAlerts, sendTestEmail } from '@/lib/notify/run'
 import { ALERT_KINDS } from '@/lib/notify/digest'
 import { generateApiKey } from '@/lib/mcp-key'
+import { deleteUserAnthropicKey, saveUserAnthropicKey } from '@/lib/analysis/credentials'
 
 export type ActionState = { ok?: boolean; error?: string; message?: string; secret?: string } | undefined
 
@@ -134,13 +135,31 @@ export async function refreshPricesAction(): Promise<ActionState> {
   }, ['/', '/watchlist'])
 }
 
-export async function runAnalysisAction(): Promise<ActionState> {
+export async function runAnalysisAction(_: ActionState, fd: FormData): Promise<ActionState> {
   return run(async () => {
     const ctx = await requireCtx()
-    const r = await runDailyAnalysis(ctx)
+    const { tickers } = z.object({ tickers: z.string().max(300).optional() }).parse(f(fd))
+    const list = (tickers ?? '').split(/[\s,]+/).filter(Boolean)
+    const r = await runDailyAnalysis(ctx, { tickers: list })
     if (r.status === 'skipped') return `건너뜀: ${r.reason}`
     return `분석 ${r.analyzed?.length ?? 0}건 완료` + (r.failed?.length ? `, 실패 ${r.failed.length}건` : '')
   }, ['/', '/watchlist'])
+}
+
+export async function saveAnthropicKeyAction(_: ActionState, fd: FormData): Promise<ActionState> {
+  return run(async () => {
+    const ctx = await requireCtx()
+    const { key } = z.object({ key: z.string().max(300) }).parse(f(fd))
+    await saveUserAnthropicKey(ctx, key)
+    return '키를 저장했습니다. 이제 분석은 내 키로 실행됩니다.'
+  }, ['/settings'])
+}
+
+export async function deleteAnthropicKeyAction(): Promise<ActionState> {
+  return run(async () => {
+    await deleteUserAnthropicKey(await requireCtx())
+    return '키를 삭제했습니다.'
+  }, ['/settings'])
 }
 
 export async function createApiKeyAction(_: ActionState, fd: FormData): Promise<ActionState> {

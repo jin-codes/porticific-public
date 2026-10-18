@@ -25,7 +25,7 @@ RLS). Google OAuth login.
 
 ## Where things are
 - `src/lib/portfolio/calc.ts` — pure math (summary, tags, DCA estimate); `service.ts` — all DB access, takes a verified `Ctx`
-- `src/lib/analysis/daily.ts` — daily analysis (Anthropic API; skipped without `ANTHROPIC_API_KEY`)
+- `src/lib/analysis/daily.ts` — on-demand analysis (Anthropic API). Key per run: the user's own key (BYOK, `credentials.ts`, AES-GCM encrypted with `KEY_ENCRYPTION_SECRET`), else the server `ANTHROPIC_API_KEY` for `OWNER_USER_ID` and the weekly thesis-check cron only. No automatic daily cron
 - `src/mcp/` — MCP tools (`server.ts`), API-key auth, OAuth helpers; routes in `src/app/api/[transport]` and `src/app/api/mcp/oauth/*`
 - `src/app/actions.ts` — UI server actions (zod-validated, always `requireCtx()` first)
 - Run scripts with `node --env-file=.env.local node_modules/.bin/tsx <file>`

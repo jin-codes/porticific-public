@@ -10,7 +10,7 @@
 - **웹 UI** — 대시보드, 종목별 페이지(논거, 분석 이력, 가격 차트, 거래), 관심종목, 거래, 설정
 - **MCP 서버** — `/api/mcp`, 포트폴리오 조회와 편집용 도구 34개(매수·매도 기록, 논거와 논거 주장, 관심종목, 태그, 정기 투자 계획). OAuth(Claude.ai 커넥터) 또는 API 키로 연결
 - **논거 추적** — 매수 논거를 검증 가능한 주장으로 쪼개 *유지 / 약화 / 훼손* 상태를 이력으로 추적
-- **일일 분석** — 매수 논거와 전날 분석을 기준으로 종목별 신호와 근거, 포트폴리오 요약, 관심종목 최우선 후보 정리(`ANTHROPIC_API_KEY` 필요)
+- **일일 분석** — 매수 논거와 전날 분석을 기준으로 종목별 신호와 근거, 포트폴리오 요약, 관심종목 최우선 후보 정리(선택한 종목만 요청 시 실행. 사용자가 설정에 암호화해 저장한 본인 Anthropic 키로 실행하거나, 본인 Claude가 `analysis_context` + `save_analysis`로 직접 분석. 서버 `ANTHROPIC_API_KEY`는 소유자 계정과 주간 논거 점검에만 쓰이며, 저장 키 암호화에 `KEY_ENCRYPTION_SECRET` 필요)
 - **이메일 요약** — 신호 변화와 다가오는 일정을 알려 주는 알림(사용자별 선택 가입)
 - **보안 모델** — 사용자별 테이블은 모두 `user_id`와 RLS(소유자 `SELECT` 정책만, 쓰기 정책 없음)를 가집니다. 모든 쓰기는 호출자를 검증한 뒤 서버 코드로만 수행하고, 매수·매도는 service role만 실행할 수 있는 원자적 SQL 함수입니다
 
@@ -29,7 +29,7 @@ npm run dev
 
 ## 배포 (Vercel)
 - 레포를 가져와 `.env.local.example`의 환경 변수를 설정합니다(`CRON_SECRET` 포함, Vercel이 크론 경로에 전달합니다).
-- `vercel.json`은 `/api/cron/prices`와 `/api/cron/daily-analysis`를 미국 장 마감 후 평일에, `/api/cron/thesis-check`를 토요일에, `/api/cron/alerts`를 매일 실행합니다(이메일 요약은 설정에서 사용자별로 켬, `ALERT_SMTP_USER` / `ALERT_SMTP_PASS` 필요, 예: Gmail 앱 비밀번호). Vercel Hobby는 하루 한 번 크론만 허용합니다.
+- `vercel.json`은 `/api/cron/prices`를 미국 장 마감 후 평일에(자동 일일 분석 없음), `/api/cron/thesis-check`를 토요일에, `/api/cron/alerts`를 매일 실행합니다(이메일 요약은 설정에서 사용자별로 켬, `ALERT_SMTP_USER` / `ALERT_SMTP_PASS` 필요, 예: Gmail 앱 비밀번호). Vercel Hobby는 하루 한 번 크론만 허용합니다.
 - 10분 간격 장중 시세가 필요하면 레포 시크릿 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`를 설정하세요. 그러면 `.github/workflows/fetch-prices.yml`이 `scripts/fetch_prices.py`를 실행합니다.
 - `NEXT_PUBLIC_SITE_URL`을 운영 도메인으로 설정합니다(설정 페이지에 표시됨).
 

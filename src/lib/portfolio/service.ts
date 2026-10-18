@@ -436,7 +436,7 @@ export const HOLDING_SIGNALS = ['add_more', 'hold', 'watch', 'trim', 'sell', 'ur
 export const WATCH_SIGNALS = ['buy', 'buy_wait', 'drop_watch'] as const
 
 /** Everything the daily analysis needs, in one read: quotes are fetched now and stored as today's snapshot. */
-export async function analysisContext(ctx: Ctx, opts: { maxTickers?: number } = {}) {
+export async function analysisContext(ctx: Ctx, opts: { maxTickers?: number; tickers?: string[] } = {}) {
   const [holdings, watchlist, profile, events, previous, cash, claims] = await Promise.all([
     listHoldings(ctx),
     listWatchlist(ctx),
@@ -464,7 +464,9 @@ export async function analysisContext(ctx: Ctx, opts: { maxTickers?: number } = 
         position: { target_price: w.target_price },
         allowed_signals: [...WATCH_SIGNALS],
       })),
-  ].slice(0, opts.maxTickers ?? 100)
+  ]
+    .filter((i) => !opts.tickers?.length || opts.tickers.map(up).includes(i.ticker))
+    .slice(0, opts.maxTickers ?? 100)
 
   const quotes = new Map((await getPriceProvider().quotes(items.map((i) => i.ticker))).map((q) => [q.ticker, q]))
   await storeQuotes(ctx.db, [...quotes.values()])

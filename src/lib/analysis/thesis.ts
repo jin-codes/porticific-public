@@ -3,6 +3,7 @@ import * as svc from '@/lib/portfolio/service'
 import type { Ctx } from '@/lib/portfolio/service'
 import { VERDICTS, type Verdict } from '@/lib/portfolio/calc'
 import { callWithTool, client } from './daily'
+import { NO_KEY_REASON, resolveAnthropicKey } from './credentials'
 
 // Thesis validation loop. A buy thesis is split into falsifiable claims (proposeClaims); each claim
 // is then re-judged against fresh facts as intact / weakened / broken (runThesisCheck) and the
@@ -25,20 +26,19 @@ export interface ThesisCheckResult {
   failed?: { ticker: string; error: string }[]
 }
 
-const model = () => process.env.ANALYSIS_MODEL ?? 'claude-sonnet-5-5'
-const missingKey = () => (process.env.ANTHROPIC_API_KEY ? null : 'ANTHROPIC_API_KEY is not set on the server')
+const model = () => process.env.ANALYSIS_MODEL ?? 'claude-haiku-5-5'
 
 /** Break a ticker's free-text thesis into 3-6 falsifiable claims and store them (status 'unchecked'). */
 export async function proposeClaims(ctx: Ctx, ticker: string) {
-  const miss = missingKey()
-  if (miss) return { status: 'skipped' as const, reason: miss }
+  const apiKey = await resolveAnthropicKey(ctx)
+  if (!apiKey) return { status: 'skipped' as const, reason: NO_KEY_REASON }
   const t = ticker.trim().toUpperCase()
   const stock = await svc.getStock(ctx, t, 1)
   const thesis = stock.holding?.thesis ?? stock.watchlist?.thesis
   if (!thesis?.trim()) return { status: 'skipped' as const, reason: `${t} has no thesis text yet` }
   if (stock.thesis_claims.length) return { status: 'skipped' as const, reason: `${t} already has ${stock.thesis_claims.length} claims` }
 
-  const out = await callWithTool<{ claims: { claim: string; kill_criteria: string }[] }>(client(), {
+  const out = await callWithTool<{ claims: { claim: string; kill_criteria: string }[] }>(client(apiKey), {
     model: model(),
     system: `You turn a buy thesis into falsifiable claims the user can track.
 - 3-6 claims, each ONE checkable statement (a fact about the business or its trajectory), not a vague virtue like "strong company".
@@ -72,13 +72,13 @@ export async function proposeClaims(ctx: Ctx, ticker: string) {
 }
 
 /** Re-check every active claim (or one ticker's) against current facts and record the verdicts. */
-export async function runThesisCheck(ctx: Ctx, opts: { ticker?: string } = {}): Promise<ThesisCheckResult> {
-  const miss = missingKey()
-  if (miss) return { status: 'skipped', reason: miss }
+export async function runThesisCheck(ctx: Ctx, opts: { ticker?: string; serverKeyOk?: boolean } = {}): Promise<ThesisCheckResult> {
+  const apiKey = await resolveAnthropicKey(ctx, { serverKeyOk: opts.serverKeyOk })
+  if (!apiKey) return { status: 'skipped', reason: NO_KEY_REASON }
   const webSearch = process.env.ANALYSIS_WEB_SEARCH === '1'
-  const anthropic = client()
+  const anthropic = client(apiKey)
 
-  const context = await svc.thesisReviewContext(ctx, opts)
+  const context = await svc.thesisReviewContext(ctx, { ticker: opts.ticker })
   if (!context.items.length) return { status: 'skipped', reason: 'no thesis claims to check' }
   const { date, investment_profile: profile } = context
 
@@ -86,7 +86,11 @@ export async function runThesisCheck(ctx: Ctx, opts: { ticker?: string } = {}): 
   const unassessed: NonNullable<ThesisCheckResult['unassessed']> = []
   const failed: NonNullable<ThesisCheckResult['failed']> = []
 
-  for (const item of context.items) {
+  // Same cap as the on-demand analysis; held tickers are checked before watchlist ones.
+  const maxTickers = Number(process.env.ANALYSIS_MAX_TICKERS ?? 15)
+  const items = [...context.items].sort((x, y) => Number(y.kind === 'holding') - Number(x.kind === 'holding')).slice(0, maxTickers)
+
+  for (const item of items) {
     try {
       const out = await callWithTool<{ checks: { claim_id: string; verdict: Verdict; evidence: string }[] }>(anthropic, {
         model: model(),
