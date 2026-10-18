@@ -52,4 +52,4 @@ npm run lint && npm run typecheck && npm test && npm run build
 비즈니스 로직은 `src/lib/`에 있고 UI 서버 액션과 MCP 도구가 공유합니다. 규칙은 [`CLAUDE.md`](CLAUDE.md)를 참고하세요. 스키마 변경은 `supabase/migrations/`에 새 파일로만 추가합니다(적용된 파일은 수정 금지).
 
 ## 라이선스 / 면책
-MIT, [`LICENSE`](LICENSE) 참고. 이 프로젝트의 어떤 내용도 투자 자문이 아니며, 시세는 지연되거나 부정확할 수 있습니다. 기본 시세 provider는 비공식 라이브러리(`yahoo-finance2`, `yfinance`)로 Yahoo Finance를 사용하며 개인 용도 전용입니다. Supabase 프로젝트와 API 키는 직접 준비하세요. 이 레포에는 자격 증명이 포함되어 있지 않습니다.
+MIT, [`LICENSE`](LICENSE) 참고. 이 프로젝트의 어떤 내용도 투자 자문이 아니며, 시세는 지연되거나 부정확할 수 있습니다. Supabase 프로젝트와 API 키는 직접 준비하세요. 이 레포에는 자격 증명이 포함되어 있지 않습니다.

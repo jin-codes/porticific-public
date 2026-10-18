@@ -52,4 +52,4 @@ npm run lint && npm run typecheck && npm test && npm run build
 Business logic lives in `src/lib/` and is shared by the UI server actions and the MCP tools. See [`CLAUDE.md`](CLAUDE.md) for conventions. Schema changes go in a new file under `supabase/migrations/` (never edit an applied one).
 
 ## License / disclaimer
-MIT, see [`LICENSE`](LICENSE). Nothing here is investment advice, and prices may be delayed or inaccurate. The default price provider uses Yahoo Finance through unofficial libraries (`yahoo-finance2`, `yfinance`) for personal use only. Bring your own Supabase project and API keys: this repo ships with no credentials.
+MIT, see [`LICENSE`](LICENSE). Nothing here is investment advice, and prices may be delayed or inaccurate. Bring your own Supabase project and API keys: this repo ships with no credentials.
