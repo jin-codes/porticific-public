@@ -18,9 +18,7 @@ RLS). Google OAuth login.
 - Business logic lives in `src/lib/` and is shared by UI server actions and MCP
   tools. Keep route handlers/pages thin.
 - Never commit `.env.local`. Never put real holdings or personal data in the repo.
-- Price data goes through `src/lib/prices/` (provider interface). The default
-  provider is unofficial (Yahoo) and personal-use only: replace it with a
-  licensed provider before opening the service to other people.
+- Price data goes through `src/lib/prices/` (provider interface).
 - Tests: `npm test` (vitest).
 
 ## Where things are
