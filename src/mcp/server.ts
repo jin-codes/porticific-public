@@ -39,7 +39,9 @@ function register<S extends ZodRawShape>(
     cb: (args: unknown, extra: { authInfo?: { extra?: Record<string, unknown> } }) => Promise<ToolResult>
   ) => void
 
-  registerTool(name, { title: toolTitle(name), description, annotations, inputSchema: shape }, async (args, extra) => {
+  // The directory reads the display name from annotations.title as well as the top-level title.
+  const title = toolTitle(name)
+  registerTool(name, { title, description, annotations: { ...annotations, title }, inputSchema: shape }, async (args, extra) => {
     const userId = extra.authInfo?.extra?.userId as string | undefined
     if (!userId) return { content: [{ type: 'text', text: 'Unauthorized: missing API key context.' }], isError: true }
     if (!toolAllowed(extra.authInfo?.extra?.scope, name)) {
