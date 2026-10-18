@@ -33,7 +33,7 @@ npm run dev
 
 ## 배포 (Vercel)
 - 레포를 가져와 `.env.local.example`의 환경 변수를 설정합니다(`CRON_SECRET` 포함, Vercel이 크론 경로에 전달합니다).
-- `vercel.json`은 `/api/cron/prices`를 미국 장 마감 후 평일에(자동 일일 분석 없음), `/api/cron/thesis-check`를 토요일에, `/api/cron/alerts`를 매일 실행합니다(이메일 요약은 설정에서 사용자별로 켬, `ALERT_SMTP_USER` / `ALERT_SMTP_PASS` 필요, 예: Gmail 앱 비밀번호). Vercel Hobby는 하루 한 번 크론만 허용합니다.
+- `vercel.json`은 `/api/cron/prices`를 미국 장 마감 후 평일에(자동 일일 분석 없음), `/api/cron/thesis-check`를 토요일에, `/api/cron/alerts`를 매일 실행합니다(이메일 요약은 설정에서 사용자별로 켬, `ALERT_SMTP_USER` / `ALERT_SMTP_PASS` 필요). Vercel Hobby는 하루 한 번 크론만 허용합니다.
 - 10분 간격 장중 시세가 필요하면 레포 시크릿 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`를 설정하세요. 그러면 `.github/workflows/fetch-prices.yml`이 `scripts/fetch_prices.py`를 실행합니다.
 - `NEXT_PUBLIC_SITE_URL`을 운영 도메인으로 설정합니다(설정 페이지에 표시됨).
 
@@ -44,9 +44,6 @@ npm run dev
   claude mcp add --transport http porticific https://<your-domain>/api/mcp \
     --header "Authorization: Bearer prt_..."
   ```
-
-## 시세 데이터
-시세는 `src/lib/prices/`의 provider 인터페이스를 통해 가져옵니다. 기본 provider는 비공식(Yahoo Finance)이며 **개인 용도 전용**입니다. 다른 사람에게 서비스를 열기 전에 라이선스가 있는 provider로 교체하세요.
 
 ## 개발
 ```bash

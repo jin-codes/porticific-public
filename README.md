@@ -33,7 +33,7 @@ npm run dev
 
 ## Deploy (Vercel)
 - Import the repo and set the env vars from `.env.local.example` (including `CRON_SECRET`, which Vercel sends to the cron routes).
-- `vercel.json` schedules `/api/cron/prices` on weekdays after the US close (no automatic daily analysis), `/api/cron/thesis-check` on Saturdays, and `/api/cron/alerts` daily (email digest, opt-in per user in Settings; needs `ALERT_SMTP_USER` / `ALERT_SMTP_PASS`, e.g. a Gmail app password). Vercel Hobby only allows daily crons.
+- `vercel.json` schedules `/api/cron/prices` on weekdays after the US close (no automatic daily analysis), `/api/cron/thesis-check` on Saturdays, and `/api/cron/alerts` daily (email digest, opt-in per user in Settings; needs `ALERT_SMTP_USER` / `ALERT_SMTP_PASS`). Vercel Hobby only allows daily crons.
 - For intraday prices every 10 minutes, set the repo secrets `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; `.github/workflows/fetch-prices.yml` then runs `scripts/fetch_prices.py`.
 - Set `NEXT_PUBLIC_SITE_URL` to the production origin (shown on the settings page).
 
@@ -44,9 +44,6 @@ npm run dev
   claude mcp add --transport http porticific https://<your-domain>/api/mcp \
     --header "Authorization: Bearer prt_..."
   ```
-
-## Market data
-Prices come from `src/lib/prices/` behind a provider interface. The default provider is unofficial (Yahoo Finance) and **for personal use only**. Replace it with a licensed provider before offering the service to other people.
 
 ## Develop
 ```bash
